@@ -1,0 +1,35 @@
+{
+  "entities": {
+    "TestConnection": {
+      "title": "Test Connection",
+      "description": "Used to verify connection to Firestore",
+      "type": "object",
+      "properties": {}
+    },
+    "Signal": {
+      "title": "Market Signal",
+      "type": "object",
+      "properties": {
+        "timestamp": { "type": "string" },
+        "asset": { "type": "string" },
+        "type": { "type": "string" },
+        "level": { "type": "number" },
+        "target": { "type": "number" },
+        "stopLoss": { "type": "number" },
+        "confidence": { "type": "number" },
+        "reason": { "type": "string" },
+        "createdAt": { "type": "timestamp" }
+      }
+    }
+  },
+  "firestore": {
+    "test/connection": {
+      "schema": "TestConnection",
+      "description": "Test verification path"
+    },
+    "signals/{signalId}": {
+      "schema": "Signal",
+      "description": "Real-time market signals"
+    }
+  }
+}

@@ -4,6 +4,7 @@ import { Activity, TrendingUp, TrendingDown, RefreshCw, Crosshair, Minus, Zap } 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { cn } from '../lib/utils';
 import { isMarketOpen } from '../utils/marketHours';
+import { useLivePrices } from '../contexts/LivePriceContext';
 
 const INITIAL_ASSETS = {
   NIFTY: { 
@@ -60,6 +61,31 @@ export default function Dashboard() {
   const [activeChartAsset, setActiveChartAsset] = useState<keyof typeof INITIAL_ASSETS>('NIFTY');
   const [assets, setAssets] = useState(INITIAL_ASSETS);
   const [marketActive, setMarketActive] = useState(isMarketOpen());
+  const livePrices = useLivePrices();
+
+  useEffect(() => {
+    setAssets(prev => {
+      const next = { ...prev };
+      (Object.keys(next) as Array<keyof typeof INITIAL_ASSETS>).forEach(key => {
+        if (livePrices[key as keyof typeof livePrices]) {
+          const oldSpot = next[key].spot;
+          const newSpot = livePrices[key as keyof typeof livePrices];
+          const spotTick = newSpot - oldSpot;
+          
+          if (spotTick !== 0) {
+            next[key] = {
+              ...next[key],
+              spot: newSpot,
+              change: Number((next[key].change + spotTick).toFixed(2))
+            };
+            const baseValue = next[key].spot - next[key].change;
+            next[key].pct = Number(((next[key].change / baseValue) * 100).toFixed(2));
+          }
+        }
+      });
+      return next;
+    });
+  }, [livePrices]);
 
   useEffect(() => {
     const checkStatus = () => {
@@ -74,12 +100,6 @@ export default function Dashboard() {
         const next = { ...prev };
         (Object.keys(next) as Array<keyof typeof INITIAL_ASSETS>).forEach(key => {
           const asset = { ...next[key] };
-          
-          const spotTick = (Math.random() * 8) - 4; 
-          asset.spot = Number((asset.spot + spotTick).toFixed(2));
-          asset.change = Number((asset.change + spotTick).toFixed(2));
-          const baseValue = asset.spot - asset.change;
-          asset.pct = Number(((asset.change / baseValue) * 100).toFixed(2));
           
           const pcrTick = (Math.random() * 0.02) - 0.01;
           asset.pcr = Number(Math.max(0.1, asset.pcr + pcrTick).toFixed(2));

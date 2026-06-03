@@ -1,5 +1,5 @@
 {
-  "name": "PRO TRADER",
+  "name": "ProTrading",
   "description": "Professional institutional trading dashboard featuring Participant-wise OI, complete Option Chain analysis, generic FII/DII flow, and Buy/Sell signals.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

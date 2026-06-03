@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardHeader, CardContent } from './ui/Core';
 import { cn } from '../lib/utils';
 import { LineChart, ArrowUpRight, ArrowDownRight, Activity, ShieldCheck, Target, TrendingUp, CheckSquare, Info, AlertTriangle } from 'lucide-react';
+import { useLivePrices } from '../contexts/LivePriceContext';
 
 const INDEX_DATA = {
   NIFTY: {
@@ -52,8 +53,10 @@ const INDEX_DATA = {
 
 export default function ProFiiIndex() {
   const [selectedIndex, setSelectedIndex] = useState<keyof typeof INDEX_DATA>('NIFTY');
+  const livePrices = useLivePrices();
   
   const data = INDEX_DATA[selectedIndex];
+  const ltp = livePrices[selectedIndex as keyof typeof livePrices] || data.spot;
 
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8">
@@ -93,7 +96,7 @@ export default function ProFiiIndex() {
                 </h3>
                 <div className="text-xs font-bold font-mono">
                   <span className="text-slate-400">SPOT: </span>
-                  <span className="text-white">{data.spot}</span>
+                  <span className="text-white">{ltp.toFixed(2)}</span>
                   <span className={cn("ml-2", data.change.startsWith('+') ? "text-emerald-400" : "text-rose-400")}>({data.change})</span>
                 </div>
               </div>

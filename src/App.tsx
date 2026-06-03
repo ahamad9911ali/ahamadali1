@@ -20,6 +20,8 @@ import { Activity } from 'lucide-react';
 import { Toaster } from 'sonner';
 import MarketStatusHeader from './components/MarketStatusHeader';
 
+import { LivePriceProvider } from './contexts/LivePriceContext';
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentView, setCurrentView] = useState<ViewState>('dashboard');
@@ -54,12 +56,13 @@ export default function App() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#090a0c] text-slate-300 selection:bg-blue-500/30 font-sans">
-      <Sidebar 
-        currentView={currentView} 
-        onChangeView={setCurrentView} 
-        onLogout={() => setIsAuthenticated(false)} 
-      />
+    <LivePriceProvider>
+      <div className="flex min-h-screen bg-[#090a0c] text-slate-300 selection:bg-blue-500/30 font-sans">
+        <Sidebar 
+          currentView={currentView} 
+          onChangeView={setCurrentView} 
+          onLogout={() => setIsAuthenticated(false)} 
+        />
       
       {/* Mobile nav indicator - very simple */}
       <div className="md:hidden fixed top-0 w-full bg-[#15171a] border-b border-slate-800 p-3 z-50 flex justify-between items-center">
@@ -96,6 +99,7 @@ export default function App() {
         </div>
       </main>
       <Toaster theme="dark" position="bottom-right" toastOptions={{ style: { background: '#101114', border: '1px solid #1e293b', color: '#f8fafc' } }} />
-    </div>
+      </div>
+    </LivePriceProvider>
   );
 }

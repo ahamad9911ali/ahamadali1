@@ -40,6 +40,29 @@ export default function MarketStatusHeader() {
 
       {/* Market Status Alert */}
       <div className="flex flex-wrap items-center gap-3">
+        {/* Broker connected */}
+        <div className="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold border bg-emerald-950/20 text-emerald-400 border-emerald-900/50">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="hidden sm:inline">BROKER TERMINAL:</span> 
+          <select 
+            className="bg-transparent outline-none cursor-pointer text-emerald-400 font-bold border-none p-0 focus:ring-0 leading-none h-auto"
+            defaultValue="Dhan"
+          >
+            <option className="bg-[#101114] text-white">Dhan</option>
+            <option className="bg-[#101114] text-white">Zerodha Kite</option>
+            <option className="bg-[#101114] text-white">Upstox</option>
+            <option className="bg-[#101114] text-white">Angel One</option>
+            <option className="bg-[#101114] text-white">Fyers</option>
+            <option className="bg-[#101114] text-white">Shoonya (Finvasia)</option>
+          </select>
+        </div>
+
+        {/* Live connected */}
+        <a href="https://www.nseindia.com/" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold border bg-blue-950/20 text-blue-400 border-blue-900/50 hover:bg-blue-900/30 transition-colors">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+          LIVE DATA CONNECTED: NSEINDIA.COM
+        </a>
+
         {/* Status Badge */}
         <div className="flex items-center gap-2">
           <div className={cn(

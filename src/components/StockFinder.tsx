@@ -161,7 +161,7 @@ export default function StockFinder() {
 
   React.useEffect(() => {
     const interval = setInterval(() => {
-      if (!isMarketOpen()) return; // Pause updates if market is closed
+      
       setStocks(currentStocks => 
         currentStocks.map(stock => {
           if (Math.random() > 0.7) { // Update ~30% of stocks per tick

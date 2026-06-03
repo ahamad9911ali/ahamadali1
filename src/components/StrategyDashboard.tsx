@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from './ui/Core';
 import { Droplets, Target, ShieldAlert, Zap, Clock, Activity, Crosshair } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useLivePrices } from '../contexts/LivePriceContext';
 
 type StrategyTab = 'ALL' | 'LIQUIDITY' | 'STOP_HUNTS' | 'OI_TRAPS' | 'MOMENTUM' | 'SCALPING';
 
@@ -292,6 +293,7 @@ export default function StrategyDashboard() {
 
   const [selectedIndex, setSelectedIndex] = useState<string>('NIFTY 50');
   const [activeTab, setActiveTab] = useState<StrategyTab>('ALL');
+  const livePrices = useLivePrices();
 
   let activePillarData: PillarData;
   if (activeTab === 'ALL') {
@@ -339,7 +341,13 @@ export default function StrategyDashboard() {
 
       {/* Index Selector */}
       <div className="flex bg-[#1a1c21] border border-slate-800 rounded-lg p-1 w-full max-w-2xl overflow-x-auto">
-        {INDEX_CONFIGS.map((idx) => (
+        {INDEX_CONFIGS.map((idx) => {
+          const key = idx.name.replace(' 50', '').replace(' ', ''); // NIFTY, BANKNIFTY, FINNIFTY, SENSEX
+          const ltp = livePrices[key as keyof typeof livePrices] || idx.ltp;
+          const diff = ltp - idx.ltp;
+          const newChg = Number((idx.chg + (diff / idx.ltp) * 100).toFixed(2));
+          
+          return (
           <button
             key={idx.name}
             onClick={() => setSelectedIndex(idx.name)}
@@ -352,13 +360,13 @@ export default function StrategyDashboard() {
           >
             <span className="text-[10px] font-bold uppercase tracking-wider">{idx.name}</span>
             <div className="flex items-center gap-1.5 mt-0.5 font-mono text-[9px]">
-              <span className="text-slate-300">₹{idx.ltp.toFixed(2)}</span>
-              <span className={cn(idx.chg >= 0 ? "text-emerald-400" : "text-rose-400")}>
-                {idx.chg >= 0 ? '+' : ''}{idx.chg}%
+              <span className="text-slate-300">₹{ltp.toFixed(2)}</span>
+              <span className={cn(newChg >= 0 ? "text-emerald-400" : "text-rose-400")}>
+                {newChg >= 0 ? '+' : ''}{newChg}%
               </span>
             </div>
           </button>
-        ))}
+        )})}
       </div>
 
       {/* Tabs */}

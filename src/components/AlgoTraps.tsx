@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardHeader, CardContent } from './ui/Core';
 import { cn } from '../lib/utils';
 import { Clock, ShieldAlert, Crosshair } from 'lucide-react';
+import { useLivePrices } from '../contexts/LivePriceContext';
 
 const INDICES = [
   {
@@ -63,6 +64,8 @@ const INDICES = [
 ];
 
 export default function AlgoTraps() {
+  const livePrices = useLivePrices();
+
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8">
       {/* Header */}
@@ -79,15 +82,21 @@ export default function AlgoTraps() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {INDICES.map(index => (
+        {INDICES.map(index => {
+          const key = index.name.replace(' 50', '').replace(' ', ''); // NIFTY, BANKNIFTY, FINNIFTY, SENSEX
+          const ltp = livePrices[key as keyof typeof livePrices] || index.ltp;
+          const diff = ltp - index.ltp;
+          const newChg = Number((index.chg + (diff / index.ltp) * 100).toFixed(2));
+          
+          return (
           <Card key={index.name} className="bg-[#101114] border-slate-800">
             <CardHeader className="p-4 border-b border-slate-800 flex flex-row items-center justify-between bg-[#15171a]">
               <div>
                 <h3 className="font-bold text-white tracking-wide">{index.name}</h3>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="font-mono text-sm text-slate-300">{index.ltp.toFixed(2)}</span>
-                  <span className={cn("text-[10px] font-mono", index.chg >= 0 ? "text-emerald-400" : "text-rose-400")}>
-                    {index.chg >= 0 ? '+' : ''}{index.chg}%
+                  <span className="font-mono text-sm text-slate-300">{ltp.toFixed(2)}</span>
+                  <span className={cn("text-[10px] font-mono", newChg >= 0 ? "text-emerald-400" : "text-rose-400")}>
+                    {newChg >= 0 ? '+' : ''}{newChg}%
                   </span>
                 </div>
               </div>
@@ -158,7 +167,8 @@ export default function AlgoTraps() {
               </div>
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

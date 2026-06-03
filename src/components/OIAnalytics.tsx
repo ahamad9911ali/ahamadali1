@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from './ui/Core';
 import { cn } from '../lib/utils';
 import { Activity, Beaker, BarChart3, Database, Glasses, Signal, ShieldAlert, Crosshair, ArrowUpRight, ArrowDownRight, ActivitySquare, Flame, TrendingUp, TrendingDown, Target, Zap } from 'lucide-react';
 import { isMarketOpen } from '../utils/marketHours';
+import { useLivePrices } from '../contexts/LivePriceContext';
 
 const INITIAL_INDEX_DATA = {
   NIFTY: {
@@ -70,16 +71,28 @@ const INITIAL_INDEX_DATA = {
 export default function OIAnalytics() {
   const [selectedIndex, setSelectedIndex] = useState<keyof typeof INITIAL_INDEX_DATA>('NIFTY');
   const [indexData, setIndexData] = useState(INITIAL_INDEX_DATA);
+  const livePrices = useLivePrices();
+
+  useEffect(() => {
+    setIndexData(prev => {
+      const next = { ...prev };
+      Object.keys(next).forEach(k => {
+        const key = k as keyof typeof INITIAL_INDEX_DATA;
+        if (livePrices[key as keyof typeof livePrices]) {
+          next[key].spot = livePrices[key as keyof typeof livePrices];
+        }
+      });
+      return next;
+    });
+  }, [livePrices]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!isMarketOpen()) return; // Pause ticking updates when market is closed
+      
       setIndexData(prev => {
         const newData = { ...prev };
         const keys = Object.keys(newData) as Array<keyof typeof INITIAL_INDEX_DATA>;
         keys.forEach(k => {
-          const tick = (Math.random() - 0.5) * 15;
-          newData[k].spot = Number((prev[k].spot + tick).toFixed(2));
           
           let pcrTick = (Math.random() - 0.5) * 0.02;
           let newPcr = prev[k].pcr + pcrTick;

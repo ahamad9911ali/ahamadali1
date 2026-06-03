@@ -87,7 +87,6 @@ export default function OptionMomentum() {
 
   useEffect(() => {
     const simulationInterval = setInterval(() => {
-      if (!isMarketOpen()) return; // Pause updates if market is closed
       
       setMomentumData(prev => {
         const next = { ...prev };

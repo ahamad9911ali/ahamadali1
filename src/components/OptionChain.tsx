@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/Core";
 import { generateOptionChain, formatNumber, cn } from "../lib/utils";
+import { useLivePrices } from '../contexts/LivePriceContext';
 import {
   Search,
   SlidersHorizontal,
@@ -220,17 +221,17 @@ export default function OptionChain() {
     }
   }, [expiryOptions]);
 
+  const livePrices = useLivePrices();
   const selectedAsset = ASSETS[assetKey];
   const [spotPrice, setSpotPrice] = useState(selectedAsset.spot);
 
   useEffect(() => {
-    setSpotPrice(ASSETS[assetKey].spot);
-    const interval = setInterval(() => {
-      if (!isMarketOpen()) return; // Pause ticking updates when market is closed
-      setSpotPrice((prev) => prev + (Math.random() * 8 - 4));
-    }, 1500);
-    return () => clearInterval(interval);
-  }, [assetKey]);
+    // Determine the equivalent context key
+    const ctxKey = assetKey === 'BANKNIFTY' ? 'BANKNIFTY' : assetKey === 'SENSEX' ? 'SENSEX' : 'NIFTY';
+    if (livePrices[ctxKey as keyof typeof livePrices]) {
+      setSpotPrice(livePrices[ctxKey as keyof typeof livePrices]);
+    }
+  }, [livePrices, assetKey]);
 
   // Generate realistic looking mock data for UI visualization around Spot Price
   const chainData = useMemo(

@@ -3,12 +3,20 @@ import { Card, CardHeader, CardTitle, CardContent, Badge } from './ui/Core';
 import { mockParticipantData } from '../data/marketData';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area } from 'recharts';
 import { format } from 'date-fns';
+import { Timeframe } from '../types';
 
 export default function ParticipantOI() {
   const [metric, setMetric] = useState<'netOptions' | 'futuresNet'>('netOptions');
+  const [timeframe, setTimeframe] = useState<Timeframe>('1M');
+
+  // Filter data based on timeframe
+  const filteredData = React.useMemo(() => {
+    const days = timeframe === '1W' ? 7 : timeframe === '1M' ? 30 : timeframe === '3M' ? 90 : 90;
+    return mockParticipantData.slice(-Math.min(days, mockParticipantData.length));
+  }, [timeframe]);
 
   // Transform data for Recharts
-  const chartData = mockParticipantData.map(day => ({
+  const chartData = filteredData.map(day => ({
     date: format(new Date(day.date), 'dd MMM'),
     FII: metric === 'netOptions' ? day.fii.netOptions : (day.fii.futuresLong - day.fii.futuresShort),
     DII: metric === 'netOptions' ? day.dii.netOptions : (day.dii.futuresLong - day.dii.futuresShort),
@@ -17,6 +25,12 @@ export default function ParticipantOI() {
   }));
 
   const latest = mockParticipantData[mockParticipantData.length - 1];
+  const [selectedDate, setSelectedDate] = useState<string>(latest.date);
+
+  // Selected date data
+  const selectedData = React.useMemo(() => {
+    return mockParticipantData.find(d => d.date === selectedDate) || latest;
+  }, [selectedDate, latest]);
 
   return (
     <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -26,29 +40,56 @@ export default function ParticipantOI() {
           <p className="text-[10px] text-slate-500 mt-0.5">Smart Money tracking - FII, DII, Pro & Client</p>
         </div>
         
-        <div className="flex bg-[#1a1c21] border border-slate-800 rounded p-0.5">
-          <button 
-            onClick={() => setMetric('netOptions')}
-            className={`px-3 py-1 rounded text-[10px] font-bold uppercase transition-colors ${metric === 'netOptions' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
-          >
-            Net Options
-          </button>
-          <button 
-            onClick={() => setMetric('futuresNet')}
-            className={`px-3 py-1 rounded text-[10px] font-bold uppercase transition-colors ${metric === 'futuresNet' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
-          >
-            Net Futures
-          </button>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <div className="flex bg-[#1a1c21] border border-slate-800 rounded p-0.5">
+            <select 
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="bg-transparent text-[10px] font-bold text-slate-300 uppercase outline-none px-2 py-1 cursor-pointer"
+            >
+              {[...mockParticipantData].reverse().map(d => (
+                <option key={d.date} value={d.date} className="bg-[#1a1c21]">{format(new Date(d.date), 'dd MMM yyyy')}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex bg-[#1a1c21] border border-slate-800 rounded p-0.5">
+
+            <button 
+              onClick={() => setMetric('netOptions')}
+              className={`px-3 py-1 rounded text-[10px] font-bold uppercase transition-colors ${metric === 'netOptions' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
+            >
+              Net Options
+            </button>
+            <button 
+              onClick={() => setMetric('futuresNet')}
+              className={`px-3 py-1 rounded text-[10px] font-bold uppercase transition-colors ${metric === 'futuresNet' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
+            >
+              Net Futures
+            </button>
+          </div>
+          
+          <div className="flex bg-[#1a1c21] border border-slate-800 rounded p-0.5">
+            {(['1W', '1M', '3M'] as Timeframe[]).map((tf) => (
+              <button 
+                key={tf}
+                onClick={() => setTimeframe(tf)}
+                className={`px-3 py-1 rounded text-[10px] font-bold uppercase transition-colors ${timeframe === tf ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
+              >
+                {tf}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { name: 'FII (Foreign Inst)', data: latest.fii, color: 'border-emerald-500', bg: 'bg-[#1a1c21]' },
-          { name: 'DII (Domestic Inst)', data: latest.dii, color: 'border-blue-500', bg: 'bg-[#1a1c21]' },
-          { name: 'Pro (Proprietary)', data: latest.pro, color: 'border-purple-500', bg: 'bg-[#1a1c21]' },
-          { name: 'Client (Retail)', data: latest.client, color: 'border-orange-500', bg: 'bg-[#1a1c21]' },
+          { name: 'FII (Foreign Inst)', data: selectedData.fii, color: 'border-emerald-500', bg: 'bg-[#1a1c21]' },
+          { name: 'DII (Domestic Inst)', data: selectedData.dii, color: 'border-blue-500', bg: 'bg-[#1a1c21]' },
+          { name: 'Pro (Proprietary)', data: selectedData.pro, color: 'border-purple-500', bg: 'bg-[#1a1c21]' },
+          { name: 'Client (Retail)', data: selectedData.client, color: 'border-orange-500', bg: 'bg-[#1a1c21]' },
         ].map((participant) => {
           const isBullish = participant.data.netOptions > 0;
           const isBearish = participant.data.netOptions < 0;

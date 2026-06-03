@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Badge } from './ui/Core';
-import { Activity, TrendingUp, TrendingDown, RefreshCw, Crosshair, Minus } from 'lucide-react';
+import { Activity, TrendingUp, TrendingDown, RefreshCw, Crosshair, Minus, Zap } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { cn } from '../lib/utils';
+import { isMarketOpen } from '../utils/marketHours';
 
 const INITIAL_ASSETS = {
   NIFTY: { 
@@ -29,6 +30,18 @@ const INITIAL_ASSETS = {
       { time: '13:30', pcr: 1.10 }, { time: '14:00', pcr: 1.14 }, { time: '14:30', pcr: 1.15 },
     ]
   },
+  FINNIFTY: { 
+    name: 'FINNIFTY', 
+    spot: 21650.80, change: -175.40, pct: -0.80, 
+    pcr: 0.86, maxPain: 21600, trend: 'BEARISH', 
+    res2: 21850, res1: 21750, sup1: 21550, sup2: 21450,
+    pcrHistory: [
+      { time: '09:15', pcr: 0.82 }, { time: '09:30', pcr: 0.84 }, { time: '10:00', pcr: 0.85 },
+      { time: '10:30', pcr: 0.88 }, { time: '11:00', pcr: 0.86 }, { time: '11:30', pcr: 0.87 },
+      { time: '12:00', pcr: 0.89 }, { time: '12:30', pcr: 0.85 }, { time: '13:00', pcr: 0.86 },
+      { time: '13:30', pcr: 0.84 }, { time: '14:00', pcr: 0.85 }, { time: '14:30', pcr: 0.86 },
+    ]
+  },
   SENSEX: { 
     name: 'SENSEX', 
     spot: 76543.20, change: -15.40, pct: -0.02, 
@@ -46,22 +59,30 @@ const INITIAL_ASSETS = {
 export default function Dashboard() {
   const [activeChartAsset, setActiveChartAsset] = useState<keyof typeof INITIAL_ASSETS>('NIFTY');
   const [assets, setAssets] = useState(INITIAL_ASSETS);
+  const [marketActive, setMarketActive] = useState(isMarketOpen());
 
   useEffect(() => {
+    const checkStatus = () => {
+      setMarketActive(isMarketOpen());
+    };
+
     const interval = setInterval(() => {
+      checkStatus();
+      if (!isMarketOpen()) return; // Pause ticking updates when market is closed
+      
       setAssets(prev => {
         const next = { ...prev };
         (Object.keys(next) as Array<keyof typeof INITIAL_ASSETS>).forEach(key => {
           const asset = { ...next[key] };
           
           const spotTick = (Math.random() * 8) - 4; 
-          asset.spot = asset.spot + spotTick;
-          asset.change = asset.change + spotTick;
+          asset.spot = Number((asset.spot + spotTick).toFixed(2));
+          asset.change = Number((asset.change + spotTick).toFixed(2));
           const baseValue = asset.spot - asset.change;
           asset.pct = Number(((asset.change / baseValue) * 100).toFixed(2));
           
           const pcrTick = (Math.random() * 0.02) - 0.01;
-          asset.pcr = Math.max(0.1, asset.pcr + pcrTick);
+          asset.pcr = Number(Math.max(0.1, asset.pcr + pcrTick).toFixed(2));
 
           const currentHist = [...asset.pcrHistory];
           currentHist[currentHist.length - 1] = { 
@@ -75,33 +96,58 @@ export default function Dashboard() {
         return next;
       });
     }, 1500);
-    return () => clearInterval(interval);
+
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   return (
     <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h2 className="text-sm font-bold text-white">Market Overview</h2>
+          <h2 className="text-sm font-bold text-white flex items-center gap-2">
+            Market Overview
+          </h2>
           <p className="text-slate-500 text-[10px] mt-0.5 flex gap-2">Live Institutional Flow, PCR, and Option Levels</p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge className="px-2 py-0.5 bg-emerald-950/20 text-emerald-400 border-emerald-900/50 shadow-[0_0_10px_rgba(16,185,129,0.1)] gap-1.5 rounded">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            MARKET OPEN
+          <Badge className={cn(
+            "px-2 py-0.5 gap-1.5 rounded",
+            marketActive 
+              ? "bg-emerald-950/20 text-emerald-400 border-emerald-900/50 shadow-[0_0_10px_rgba(16,185,129,0.1)] font-bold text-[10px]"
+              : "bg-rose-950/20 text-rose-400 border-rose-900/30 font-bold text-[10px]"
+          )}>
+            <span className={cn(
+              "w-1.5 h-1.5 rounded-full",
+              marketActive ? "bg-emerald-500 animate-pulse" : "bg-rose-500"
+            )} />
+            {marketActive ? 'MARKET OPEN' : 'MARKET CLOSED'}
           </Badge>
           <button className="p-1.5 bg-[#1a1c21] border border-slate-800 rounded text-slate-400 hover:text-white transition-colors cursor-pointer">
             <RefreshCw className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* 0-DTE Expiry Special Notice */}
+      <div className="bg-gradient-to-r from-orange-950/20 via-[#101114] to-amber-950/20 border border-orange-500/20 rounded-lg p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative overflow-hidden sm:col-span-2 lg:col-span-4 mb-1">
+        <div className="flex items-center gap-2.5">
+          <span className="p-1.5 bg-orange-600/25 text-orange-400 border border-orange-500/40 rounded animate-pulse shrink-0">
+            <Zap className="w-4 h-4" />
+          </span>
+          <div className="text-[10.5px]">
+            <span className="text-white font-extrabold uppercase block tracking-widest text-[10px] mb-0.5">⚡ LIVE 0-DTE EXPIRY OPTIONS ACTIVE</span>
+            <span className="text-slate-400 leading-relaxed">
+              Scan high-momentum volatility spikes and low-premium gamma expansion entries for <strong className="text-orange-400">NIFTY 50</strong> & <strong className="text-orange-400">SENSEX</strong>. Open the new <strong className="text-white font-bold bg-slate-900 border border-slate-800 px-1.5 py-0.5 rounded font-mono text-[9px] uppercase tracking-wide">Expiry 0-DTE</strong> terminal module via the side rail to view auto-generated trade signals limitlessly tracking institutional entry, exit and targets with exact timestamps.
+            </span>
+          </div>
+        </div>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {Object.entries(assets).map(([key, data]) => (
+        {(Object.entries(assets) as [string, typeof INITIAL_ASSETS['NIFTY']][]).map(([key, data]) => (
           <Card key={key} className="bg-[#101114] border-slate-800 relative overflow-hidden flex flex-col h-full">
-            <div className="absolute top-0 right-0 p-3 opacity-5 pointer-events-none">
-              {data.trend === 'BULLISH' ? <TrendingUp className="w-16 h-16" /> : data.trend === 'BEARISH' ? <TrendingDown className="w-16 h-16" /> : <Minus className="w-16 h-16" />}
-            </div>
             <CardContent className="p-3 relative z-10 flex flex-col h-full gap-3">
               {/* Header */}
               <div className="flex justify-between items-start">
@@ -200,6 +246,7 @@ export default function Dashboard() {
             >
               <option value="NIFTY">NIFTY 50</option>
               <option value="BANKNIFTY">BANKNIFTY</option>
+              <option value="FINNIFTY">FINNIFTY</option>
               <option value="SENSEX">SENSEX</option>
             </select>
           </CardHeader>

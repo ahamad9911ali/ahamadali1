@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Users, List, Zap, LogOut, Target, Briefcase, Search } from 'lucide-react';
+import { LayoutDashboard, Users, List, Zap, LogOut, Target, Briefcase, Search, LineChart, IndianRupee, ShieldAlert, Rocket } from 'lucide-react';
 import { ViewState } from '../types';
 import { cn } from '../lib/utils';
 
@@ -12,12 +12,19 @@ interface SidebarProps {
 export default function Sidebar({ currentView, onChangeView, onLogout }: SidebarProps) {
   const navItems = [
     { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
+    { id: 'expiryExpert', label: 'Expiry 0-DTE', icon: Zap },
+    { id: 'slHunter', label: 'SL Hunter', icon: Target },
     { id: 'participant', label: 'Participant Flow', icon: Users },
     { id: 'optionChain', label: 'Option Chain', icon: List },
-    { id: 'advanced', label: 'Algo Traps', icon: Target },
     { id: 'strategy', label: 'Smart Money', icon: Briefcase },
+    { id: 'oiAnalytics', label: 'OI Analytics', icon: Target },
+    { id: 'institutionalStock', label: 'Pro Stock', icon: LineChart },
+    { id: 'proFiiIndex', label: 'Index Strategy Builder', icon: Target },
+    { id: 'sectorRotation', label: 'Sector Rotation', icon: Target },
+    { id: 'pennyStock', label: 'Penny Stocks', icon: IndianRupee },
+    { id: 'algoTraps', label: 'Algo Traps', icon: ShieldAlert },
+    { id: 'optionMomentum', label: 'Option Momentum', icon: Rocket },
     { id: 'stockFinder', label: 'Stock Finder', icon: Search },
-    { id: 'signals', label: 'Signals', icon: Zap },
   ] as const;
 
   return (

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/Core';
-import { Search, TrendingUp, TrendingDown, Filter, Zap, Eye } from 'lucide-react';
+import { Search, TrendingUp, TrendingDown, Filter, Zap, Eye, X, BarChart2 } from 'lucide-react';
+import { AdvancedRealTimeChart } from 'react-ts-tradingview-widgets';
 import { cn } from '../lib/utils';
+import { isMarketOpen } from '../utils/marketHours';
 
 interface StockData {
   symbol: string;
@@ -155,9 +157,11 @@ export default function StockFinder() {
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'NIFTY500' | 'FNO'>('ALL');
   const [actionFilter, setActionFilter] = useState<'ALL' | 'BUY' | 'SELL' | 'NEUTRAL'>('ALL');
   const [stocks, setStocks] = useState<StockData[]>(MOCK_STOCKS);
+  const [selectedStock, setSelectedStock] = useState<StockData | null>(null);
 
   React.useEffect(() => {
     const interval = setInterval(() => {
+      if (!isMarketOpen()) return; // Pause updates if market is closed
       setStocks(currentStocks => 
         currentStocks.map(stock => {
           if (Math.random() > 0.7) { // Update ~30% of stocks per tick
@@ -307,12 +311,12 @@ export default function StockFinder() {
                 {filteredStocks.map((stock) => {
                   const isPositive = stock.change >= 0;
                   return (
-                    <tr key={stock.symbol} className="hover:bg-slate-800/30 transition-colors">
+                    <tr key={stock.symbol} onClick={() => setSelectedStock(stock)} className="hover:bg-slate-800/30 transition-colors cursor-pointer group">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <div>
                             <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-slate-200">{stock.symbol}</span>
+                              <span className="font-bold text-slate-200 group-hover:text-blue-400 transition-colors">{stock.symbol}</span>
                               <span className={cn(
                                 "text-[8px] font-bold px-1 py-0.5 rounded uppercase tracking-wider",
                                 stock.category === 'NIFTY500' ? "bg-amber-900/40 text-amber-400 border border-amber-900/50" : "bg-blue-900/40 text-blue-400 border border-blue-900/50"
@@ -394,6 +398,57 @@ export default function StockFinder() {
           </div>
         </CardContent>
       </Card>
+
+      {selectedStock && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-8 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-6xl h-[85vh] bg-[#101114] border border-slate-700 rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-3 border-b border-slate-800 bg-[#15171a]">
+              <div className="flex items-center gap-3">
+                 <div className="p-2 bg-indigo-500/10 rounded-lg border border-indigo-500/20">
+                   <BarChart2 className="w-5 h-5 text-indigo-400" />
+                 </div>
+                 <div>
+                   <h3 className="text-white font-bold tracking-tight text-lg leading-tight">{selectedStock.symbol}</h3>
+                   <div className="flex items-center gap-2">
+                     <span className="text-xs text-slate-400 font-medium">{selectedStock.name}</span>
+                     <span className="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-medium">BSE / NSE</span>
+                   </div>
+                 </div>
+                 <div className="ml-4 pl-4 border-l border-slate-800">
+                   <div className="font-mono text-white font-bold">{selectedStock.ltp.toFixed(2)}</div>
+                   <div className={cn("text-[10px] font-mono", selectedStock.change >= 0 ? "text-emerald-400" : "text-red-400")}>
+                     {selectedStock.change >= 0 ? '+' : ''}{selectedStock.change.toFixed(2)} ({selectedStock.change >= 0 ? '+' : ''}{selectedStock.pct}%)
+                   </div>
+                 </div>
+              </div>
+              <button 
+                onClick={() => setSelectedStock(null)} 
+                className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                aria-label="Close chart"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 w-full relative bg-[#15171a]">
+              <AdvancedRealTimeChart 
+                theme="dark" 
+                symbol={`BSE:${selectedStock.symbol}`} 
+                autosize 
+                timezone="Asia/Kolkata"
+                interval="15"
+                withdateranges={true}
+                hide_side_toolbar={false}
+                hide_top_toolbar={false}
+                allow_symbol_change={true}
+                save_image={true}
+                details={true}
+                enable_publishing={false}
+                container_id="tradingview_chart_finder"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
